@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mr.mapper.SkuMapper">
+    <sql id="listSkuSql">
+         SELECT
+          spu.Id AS spuId,
+          spu.*,
+          sku.Id AS skuId,
+          sku.*
+        FROM
+          t_mall_product spu,
+          t_mall_sku sku
+        WHERE spu.Id = sku.shp_id
+          AND spu.flbh2 =#{flbh2}
+    </sql>
+
+    <select id="queryListSku" resultMap="queryListSkuMap">
+        <include refid="listSkuSql"></include>
+    </select>
+
+    <select id="listSkuByAttr" resultMap="queryListSkuMap">
+        <include refid="listSkuSql"></include>
+        AND
+          sku.id
+        in  (select t0.sku_id from
+          <foreach collection="attrValueList" item="avList" separator="," index="i">
+              (select * from t_mall_sku_attr_value sav where sav.shxm_id = #{avList.shxmId} AND sav.shxzh_id = #{avList.shxzhId}) t${i}
+          </foreach>
+          <if test="attrValueList.size > 1">
+        <where>
+            <foreach collection="attrValueList" index="i">
+                <if test="i > 0">
+                    and t${i-1}.sku_id=t${i}.sku_id
+                </if>
+            </foreach>
+            </where>
+          </if>
+        )
+    </select>
+    <resultMap id="queryListSkuMap" type="com.mr.model.OBJECTSku" autoMapping="true">
+        <id column="skuId" property="id"></id>
+        <association property="spu" javaType="com.mr.model.TMallProduct" autoMapping="true">
+            <id column="spuId" property="id"></id>
+        </association>
+    </resultMap>
+
+
+</mapper>
